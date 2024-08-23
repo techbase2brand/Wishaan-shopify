@@ -5,19 +5,15 @@ import { blackColor, redColor, whiteColor, blackOpacity5 } from '../../constants
 import { getAdminAccessToken, getStoreDomain, STOREFRONT_DOMAIN, ADMINAPI_ACCESS_TOKEN } from '../../constants/Constants';
 import { spacings, style } from '../../constants/Fonts';
 import { BaseStyle } from '../../constants/Style';
-import Ionicons from 'react-native-vector-icons/dist/Ionicons';
-import Toast from 'react-native-simple-toast';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { logEvent } from '@amplitude/analytics-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useThemes } from '../../context/ThemeContext';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-
 import { lightColors, darkColors } from '../../constants/Color';
 import ReviewForm from '../ReviewForm';
-const { textAlign, alignJustifyCenter, flex, borderRadius10, positionAbsolute } = BaseStyle;
+const { flex } = BaseStyle;
 
 const AddReviewModal = ({ visible, onClose }) => {
     const selectedItem = useSelector((state) => state.menu.selectedItem);
@@ -26,9 +22,6 @@ const AddReviewModal = ({ visible, onClose }) => {
     // const STOREFRONT_DOMAIN = getStoreDomain(selectedItem)
     // const ADMINAPI_ACCESS_TOKEN = getAdminAccessToken(selectedItem)
     const navigation = useNavigation()
-
-
-
 
     useEffect(() => {
         const fetchUserDetails = async () => {
@@ -43,10 +36,6 @@ const AddReviewModal = ({ visible, onClose }) => {
         fetchUserDetails();
     }, []);
 
-
-
-
-
     return (
         <Modal visible={visible} transparent={true} animationType="slide">
             <View style={{ position: "absolute", top: 480, left: 182, borderRadius: 100 }}>
@@ -55,7 +44,7 @@ const AddReviewModal = ({ visible, onClose }) => {
             </View>
             <Pressable style={[styles.modalContainer, flex, { justifyContent: "flex-end" }]} onPress={onClose}>
                 <View style={[styles.modalContent, { backgroundColor: colors.whiteColor }]}>
-                    <ReviewForm productId={"gid://shopify/Product/9431359258931"} />
+                    <ReviewForm productId={"gid://shopify/Product/9431359553843"} />
                 </View>
             </Pressable>
         </Modal>

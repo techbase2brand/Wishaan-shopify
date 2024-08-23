@@ -789,44 +789,89 @@ function App({ navigation }: { navigation: any }) {
   const dispatch = useDispatch();
   const [showSplash, setShowSplash] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const activeCollectionId = useSelector((state) => state.activeCollection.activeCollectionId);
+  const titles = useSelector((state) => state.titles);
+console.log("activeCollectionId,",activeCollectionId, "titles",titles);
+  // useEffect(() => {
+  //   dispatch(fetchVideosRequest());
+  //   const fetchproduct = async () => {
+  //     const myHeaders = new Headers();
+  //     myHeaders.append("Content-Type", "application/json");
+  //     myHeaders.append("X-Shopify-Access-Token", ADMINAPI_ACCESS_TOKEN);
+  //     const graphql = JSON.stringify({
+
+  //       query: "query { products(first: 250) { edges { node { id title vendor handle descriptionHtml variants(first: 100) { edges { node { id title inventoryQuantity price compareAtPrice selectedOptions { name value } } } } images(first: 30) { edges { node { src originalSrc altText } } } media(first: 10) { edges { node { mediaContentType ... on Video { sources { url } } } } } } } } }",
+
+  //       variables: {}
+  //     });
+  //     const requestOptions = {
+  //       method: "POST",
+  //       headers: myHeaders,
+  //       body: graphql,
+  //       redirect: "follow"
+  //     };
+  //     fetch(`https://${STOREFRONT_DOMAIN}/admin/api/2024-01/graphql.json`, requestOptions)
+  //       .then((response) => response.json())
+  //       .then((result) => {
+  //         const fetchedProducts = result?.data?.products?.edges;
+  //         const productMedia = fetchedProducts?.map(productEdge =>
+  //           productEdge?.node?.media?.edges?.map(mediaEdge => mediaEdge?.node?.sources[0])
+  //         );
+  //         productVideosUrl = productMedia.reduce((acc, val) => acc.concat(val), []);
+  //         dispatch(fetchVideosSuccess(fetchedProducts));
+
+  //         cacheVideos(productVideosUrl)
+
+  //         // console.log("productmeddia", fetchedProducts);
+  //       })
+  //       .catch((error) => console.log(error));
+  //   }
+  //   fetchproduct()
+  // }, [dispatch])
+
 
   useEffect(() => {
     dispatch(fetchVideosRequest());
-    const fetchproduct = async () => {
+    const fetchProduct =  async() => {
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
       myHeaders.append("X-Shopify-Access-Token", ADMINAPI_ACCESS_TOKEN);
+
       const graphql = JSON.stringify({
-
-        query: "query { products(first: 250) { edges { node { id title vendor handle descriptionHtml variants(first: 100) { edges { node { id title inventoryQuantity price compareAtPrice selectedOptions { name value } } } } images(first: 30) { edges { node { src originalSrc altText } } } media(first: 10) { edges { node { mediaContentType ... on Video { sources { url } } } } } } } } }",
-
+        query: `query MyQuery {
+          collection(id: "${activeCollectionId}") {
+            products(first: 250) { edges { node { id title vendor handle descriptionHtml variants(first: 100) { edges { node { id title inventoryQuantity price compareAtPrice selectedOptions { name value } } } } images(first: 30) { edges { node { src originalSrc altText } } } media(first: 10) { edges { node { mediaContentType ... on Video { sources { url } } } } } } } }
+          }
+        }`,
         variables: {}
       });
+
       const requestOptions = {
         method: "POST",
         headers: myHeaders,
         body: graphql,
         redirect: "follow"
       };
-      fetch(`https://${STOREFRONT_DOMAIN}/admin/api/2024-01/graphql.json`, requestOptions)
+
+      fetch(`https://${STOREFRONT_DOMAIN}/admin/api/2024-04/graphql.json`, requestOptions)
         .then((response) => response.json())
         .then((result) => {
-          const fetchedProducts = result?.data?.products?.edges;
+          const fetchedProducts = result?.data?.collection?.products?.edges;
+          console.log("fetchedProducts",fetchedProducts.length);
+          
+          // const result1 = response.data;
           const productMedia = fetchedProducts?.map(productEdge =>
             productEdge?.node?.media?.edges?.map(mediaEdge => mediaEdge?.node?.sources[0])
           );
           productVideosUrl = productMedia.reduce((acc, val) => acc.concat(val), []);
           dispatch(fetchVideosSuccess(fetchedProducts));
-
           cacheVideos(productVideosUrl)
-
-          // console.log("productmeddia", fetchedProducts);
         })
         .catch((error) => console.log(error));
-    }
-    fetchproduct()
-  }, [dispatch])
+    };
 
+    fetchProduct();
+  }, [activeCollectionId, dispatch]);
   const cacheVideos = async (videoList) => {
     const MAX_CACHE_SIZE = 20; // Example maximum cache size
     const cachedVideos = await Promise.all(

@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Entypo from 'react-native-vector-icons/Entypo';
-import { useSelector } from 'react-redux';
+import { useSelector,useDispatch } from 'react-redux';
 // import RNFetchBlob from 'rn-fetch-blob';
 // import PagerView from 'react-native-pager-view';
 import Header from '../components/Header';
@@ -29,13 +29,22 @@ import SellersComponent from '../components/SellersComponent';
 import VipAddSection from '../components/VipAddSection';
 import VideoList from '../components/VideoList';
 import axios from 'axios';
+import { STOREFRONT_DOMAIN, ADMINAPI_ACCESS_TOKEN } from '../constants/Constants';
+import { setActiveCollectionId, setTitles } from '../redux/actions/collectionIdAction';
+
+
 const { width, height } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }) {
   const { loading, videos, error } = useSelector(state => state?.videos);
   const cachedFiles = useSelector(state => state.cachedFiles?.cachedFiles);
+// console.log("cachedFiles",cachedFiles);
 
-  
+  const dispatch = useDispatch();
+  // const { activeCollectionId, titles } = useSelector((state) => state);
+  const activeCollectionId = useSelector((state) => state.activeCollection.activeCollectionId);
+  const titles = useSelector((state) => state.titles);
+console.log("activeCollectionId,",videos.length );
 
   const topSellingProducts = [
     {
@@ -65,13 +74,23 @@ export default function HomeScreen({ navigation }) {
     },
   ];
   const [selectedFilter, setSelectedFilter] = useState('All');
+  console.log("selectedFilter",selectedFilter);
+
+  // const [activeCollectionId, setActiveCollectionId] = useState("gid://shopify/Collection/481233142067");
   const [currentIndex, setCurrentIndex] = useState();
   const [videosWithAds, setVideosWithAds] = useState([]);
   const [videosWithoutAds, setVideosWithoutAds] = useState([]);
   const [loadVideos, setLoadVideos] = useState([]);
   const [page, setPage] = useState(1);
   const [VideoLoading, setVideoLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  // const [topsellingProduct, setTopsellingProduct] = useState([]);
+  // const [titles, setTitles] = useState();
+  // console.log("titles",titles);
+  // console.log("topsellingProduct", topsellingProduct);
+
+  // console.log("activeCollectionId", activeCollectionId);
+
+
   // const fetchProductsByVendor = async (vendorName) => {
   //   const query = `
   //     {
@@ -82,7 +101,7 @@ export default function HomeScreen({ navigation }) {
   //             title
   //             vendor
   //             descriptionHtml
-             
+
   //             variants(first: 5) {
   //               edges {
   //                 node {
@@ -100,7 +119,7 @@ export default function HomeScreen({ navigation }) {
   //       }
   //     }
   //   `;
-  
+
   //   try {
   //     const response = await axios.post(
   //       'https://wishandemoapp.myshopify.com/api/2024-07/graphql.json',
@@ -113,7 +132,7 @@ export default function HomeScreen({ navigation }) {
   //       }
   //     );
   //     console.log("response.data.data.products.edges", response.data.data.products.edges);
-      
+
   //     return response.data.data.products.edges;
 
   //   } catch (error) {
@@ -131,7 +150,7 @@ export default function HomeScreen({ navigation }) {
   //             title
   //             vendor
   //             descriptionHtml
-              
+
   //             variants(first: 5) {
   //               edges {
   //                 node {
@@ -149,7 +168,7 @@ export default function HomeScreen({ navigation }) {
   //       }
   //     }
   //   `;
-  
+
   //   try {
   //     const response = await axios.post(
   //       'https://wishandemoapp.myshopify.com/api/2024-07/graphql.json',
@@ -163,9 +182,9 @@ export default function HomeScreen({ navigation }) {
   //     );
 
   //     // console.log("response.data.data.products.edges", response.data.data.products.edges);
-      
+
   //     return response.data.data.products.edges;
-  
+
   //   } catch (error) {
   //     console.error("Error fetching products by vendor:", error);
   //     return [];
@@ -173,7 +192,7 @@ export default function HomeScreen({ navigation }) {
   // };
   // const fetchProductMetafields = async (productID) => {
   //   console.log("productID", productID);
-    
+
   //   try {
   //     const response = await axios.get(`https://wishandemoapp.myshopify.com/admin/api/2024-07/products/${productID}/metafields.json`, {
   //       headers: {
@@ -207,30 +226,26 @@ export default function HomeScreen({ navigation }) {
   //       // .join(','); // Join IDs with commas
 
   //     // Fetch product details based on extracted IDs
-     
+
 
   //   } catch (error) {
   //     console.error('Error fetching metafields:', error);
   //   }
   // };
-  
-  
-  
- 
-  useEffect(() => {
-  
 
-    // if (productVideosUrl && productVideosUrl.length > 0) {
-    //   setVideosWithAds(productVideosUrl.slice(0, 3));
-    //   setVideosWithoutAds(productVideosUrl.slice(3));
-    // }
+
+
+
+  useEffect(() => {
   }, [videos]);
   // List of filters
-  const filters = ['All', 'Beauty Appliances', 'Home Decor', 'Speakers'];
+  // const filters = ['All', 'Beauty Appliances', 'Home Decor', 'Speakers'];
 
   // Handle filter button press
-  const handleFilterPress = filter => {
-    setSelectedFilter(filter);
+  const handleFilterPress = collection => {
+    setSelectedFilter(collection?.title);
+    dispatch(setActiveCollectionId(collection?.admin_graphql_api_id));
+    // setActiveCollectionId(collection?.admin_graphql_api_id)
   };
 
   // Render each filter button
@@ -238,15 +253,15 @@ export default function HomeScreen({ navigation }) {
     <TouchableOpacity
       style={[
         styles.filterButton,
-        item === selectedFilter && styles.selectedFilterButton,
+        item?.title === selectedFilter && styles.selectedFilterButton,
       ]}
       onPress={() => handleFilterPress(item)}>
       <Text
         style={[
           styles.filterButtonText,
-          item === selectedFilter && styles.selectedFilterButtonText,
+          item?.title === selectedFilter && styles.selectedFilterButtonText,
         ]}>
-        {item}
+        {item?.title}
       </Text>
     </TouchableOpacity>
   );
@@ -282,6 +297,34 @@ export default function HomeScreen({ navigation }) {
     setPlayingIndex((prevIndex) => (prevIndex + 1) % visibleVideoIndices.length);
   };
 
+  const fetchCustomCollections = async () => {
+    try {
+      const response = await axios.get(`https://${STOREFRONT_DOMAIN}/admin/api/2024-07/custom_collections.json`, {
+        headers: {
+          'X-Shopify-Access-Token': ADMINAPI_ACCESS_TOKEN,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const collections = response.data.custom_collections;
+      // console.log("collections",collections);
+
+      // const collectionData = collections.map(collection => ({
+      //   id: collection.admin_graphql_api_id,
+      //   title: collection.title
+      // }));
+      dispatch(setTitles(collections));
+      // setTitles(collections);
+      return collections;
+    } catch (error) {
+      console.error('Error fetching custom collections:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomCollections();
+  }, []);
+
   useEffect(() => {
     clearAllTimers();
     if (visibleVideoIndices.length > 0) {
@@ -292,6 +335,15 @@ export default function HomeScreen({ navigation }) {
     return () => clearAllTimers();
   }, [visibleVideoIndices]);
 
+  const [products, setProducts] = useState([]);
+  const [inventoryQuantities, setInventoryQuantities] = useState([]);
+  const [options, setOptions] = useState([]);
+  const [productVariantsIDS, setProductVariantsIDS] = useState([]);
+  const [tags, setTags] = useState([]);
+
+  console.log("products...", products);
+
+ 
   const onViewableItemsChanged1 = useRef(({ viewableItems }) => {
     const newVisibleIndices = viewableItems.map(item => item.index);
     if (newVisibleIndices.join() !== visibleVideoIndices.join()) {
@@ -310,8 +362,8 @@ export default function HomeScreen({ navigation }) {
     ),
     [visibleVideoIndices, playingIndex]
   );
-
-
+  // const [productImagesAndTitles, setProductImagesAndTitles] = useState([]);
+// console.log("productImagesAndTitles..",productImagesAndTitles);
 
   const viewabilityConfig = {
     itemVisiblePercentThreshold: 50,
@@ -323,6 +375,57 @@ export default function HomeScreen({ navigation }) {
       setCurrentIndex(visibleItem.index);
     }
   }, []);
+
+  // useEffect(() => {
+  //   const fetchproduct = () => {
+  //     const myHeaders = new Headers();
+  //     myHeaders.append("Content-Type", "application/json");
+  //     myHeaders.append("X-Shopify-Access-Token", ADMINAPI_ACCESS_TOKEN);
+  //     const graphql = JSON.stringify({
+  //       query: `query MyQuery {
+  //         collection(id: "gid://shopify/Collection/481233043763") {
+  //           products(first: 250) { edges { node { id title vendor handle descriptionHtml variants(first: 100) { edges { node { id title inventoryQuantity price compareAtPrice selectedOptions { name value } } } } images(first: 30) { edges { node { src originalSrc altText } } } media(first: 10) { edges { node { mediaContentType ... on Video { sources { url } } } } } } } }
+  //         }
+  //       }`,
+  //       variables: {}
+  //     });
+  //     const requestOptions = {
+  //       method: "POST",
+  //       headers: myHeaders,
+  //       body: graphql,
+  //       redirect: "follow"
+  //     };
+  //     fetch(`https://${STOREFRONT_DOMAIN}/admin/api/2024-04/graphql.json`, requestOptions)
+  //       .then((response) => response.json())
+  //       .then((result) => {
+  //         // const fetchedProduct = JSON.parse(result);
+          
+  //         // console.log(fetchedProducts.data?.collection?.products, "fetchedProducts.data")
+  //         // const fetchedProducts = result?.data?.collection?.products?.edges[0].node.images.edges[0].node;
+  //         const fetchedProducts = result?.data?.collection?.products?.edges;
+
+  //         console.log("fetchedProduct,,",result?.data?.collection?.products?.edges);
+
+  //         if (fetchedProducts) {
+  //           const extractedData = fetchedProducts.map(product => {
+  //             return {
+  //               title: product.node.title,
+  //               images: product.node.images.edges[0]?.node.src // Get the first image URL directly
+  //             };
+  //           });
+      
+  //           // Set the extracted data into the state
+      
+  //           // Set the extracted data into the state
+  //           setProductImagesAndTitles(extractedData);
+  //         }
+  //       //  setTopsellingProduct(fetchedProducts)
+  //       })
+  //       .catch((error) => console.log(error));
+  //   }
+  //   fetchproduct();
+  // }, [])
+
 
   const sections = [
     {
@@ -371,11 +474,11 @@ export default function HomeScreen({ navigation }) {
     switch (item.type) {
       case 'header':
         return <Header
-        navigation={navigation}
-        textinput={true}
-        image={true}
-        menuImage={true}
-        shoppingCart={true} />;
+          navigation={navigation}
+          textinput={true}
+          image={true}
+          menuImage={true}
+          shoppingCart={true} />;
       case 'topSellingProducts':
         return (
           <>
@@ -397,7 +500,7 @@ export default function HomeScreen({ navigation }) {
       case 'filters':
         return (
           <FlatList
-            data={filters}
+            data={titles?.titles}
             renderItem={renderItem}
             keyExtractor={item => item}
             horizontal
@@ -408,7 +511,7 @@ export default function HomeScreen({ navigation }) {
       case 'videosWithAds':
         return (
           <VideoList
-          cachedFiles={videos}
+            cachedFiles={videos}
             currentIndex={currentIndex}
             onViewableItemsChanged={onViewableItemsChanged}
             viewabilityConfig={viewabilityConfig}
@@ -441,11 +544,11 @@ export default function HomeScreen({ navigation }) {
                 showsHorizontalScrollIndicator={false}
                 renderItem={renderItem1}
                 keyExtractor={item => item.video_id}
-                // onViewableItemsChanged={onViewableItemsChanged1}
-                // viewabilityConfig={viewabilityConfig1}
-                // getItemLayout={(data, index) => (
-                //   { length: width, offset: width * index, index }
-                // )}
+              // onViewableItemsChanged={onViewableItemsChanged1}
+              // viewabilityConfig={viewabilityConfig1}
+              // getItemLayout={(data, index) => (
+              //   { length: width, offset: width * index, index }
+              // )}
               />
               {/* <ScrollView
                 horizontal
@@ -551,6 +654,8 @@ export default function HomeScreen({ navigation }) {
         return null;
     }
   };
+
+
 
   return (
     <SectionList

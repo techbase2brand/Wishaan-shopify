@@ -5,6 +5,8 @@ import cartReducer from './cartReducer';
 import menuReducer from './menuReducer';
 import videoReducer from './videoReducer';
 import cachedFilesReducer from './cachedFilesReducer';
+import activeCollectionReducer from './activeCollectionReducer';
+import titlesReducer from './titlesReducer';
 
 const rootReducer = combineReducers({
   wishlist: wishlistReducer,
@@ -13,6 +15,8 @@ const rootReducer = combineReducers({
   menu: menuReducer,
   videos: videoReducer,
   cachedFiles: cachedFilesReducer,
+  activeCollection: activeCollectionReducer,
+  titles: titlesReducer,
 });
 
 export default rootReducer;

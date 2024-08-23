@@ -2,14 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-
 import { REEL_PLAY_BLACK, SEARCH_RED, SEARCH_ICON } from '../assests/images';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from '../utils';
 import Header from '../components/Header'
 import AddReviewModal from '../components/Modal/AddReviewModal';
 import { blackColor, redColor, whiteColor, lightShadeBlue, mediumGray, grayColor } from '../constants/Color';
-
-
 
 
 const OrderHistory = ({ navigation }) => {
@@ -95,7 +92,11 @@ const OrderHistory = ({ navigation }) => {
                         </View>
                     </View>
                 )} */}
-
+                {item.status === 'Delivered' && item.reorderable && (
+                    <TouchableOpacity style={[styles.reorderButton, { flexDirection: "row", marginTop: 20 }]} onPress={onPressAddAddress}>
+                        <Text style={styles.reorderText}>Rating </Text>
+                    </TouchableOpacity>
+                )}
                 <View style={styles.actionContainer}>
                     {item.status === 'Delivered' && item.reorderable && (
                         <TouchableOpacity style={[styles.reorderButton, { flexDirection: "row" }]}>
@@ -104,7 +105,7 @@ const OrderHistory = ({ navigation }) => {
                         </TouchableOpacity>
                     )}
                     {item.status === 'Processing' && (
-                        <TouchableOpacity style={styles.trackButton} onPress={onPressAddAddress}>
+                        <TouchableOpacity style={styles.trackButton} >
                             <Text style={styles.trackText}>Track Order</Text>
                         </TouchableOpacity>
                     )}
@@ -117,7 +118,7 @@ const OrderHistory = ({ navigation }) => {
             </View>
         </View>
     );
-  
+
     return (
         <View style={styles.container}>
             <Header backIcon={true} text={"Order History"} navigation={navigation} />

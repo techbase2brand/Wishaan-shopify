@@ -7,11 +7,14 @@ import VipAddSection from './VipAddSection';
 import { VIP_LOGO } from '../assests/images';
 import { grayColor, redColor } from '../constants/Color';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from '../utils';
+import { useSelector,useDispatch } from 'react-redux';
 
 
 const { height } = Dimensions.get('window');
 
 const VideoList = ({ cachedFiles, currentIndex, onViewableItemsChanged, viewabilityConfig, navigation }) => {
+  const cacheFiles = useSelector(state => state.cachedFiles?.cachedFiles);
+console.log("cacheFilescacheFiles",cacheFiles);
   const [videos, setVideos] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -246,7 +249,7 @@ extractInventoryQuantities();
   return (
     <View style={{}}>
       <FlatList
-        data={productVideosUrl}
+        data={productVideosUrl || cacheFiles}
         // renderItem={renderItem}
         renderItem={({ item, index }) => (
           <VideoItem

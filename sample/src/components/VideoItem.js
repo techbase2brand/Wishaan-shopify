@@ -149,7 +149,6 @@ const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
           style={{
             width: 20,
             height: 20,
-
           }}
         /> : <Ionicons
           name="volume-high-outline"
@@ -158,7 +157,6 @@ const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
           style={{
             width: 24,
             height: 24,
-
           }}
         />}
       </TouchableOpacity>
@@ -176,7 +174,7 @@ const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
             color="black"
             style={styles.icon}
           />
-          <Icon name="comment-o" size={25} color="black" style={styles.icon} />
+          {/* <Icon name="comment-o" size={25} color="black" style={styles.icon} /> */}
           <Image
             source={SHARE}
             style={{
