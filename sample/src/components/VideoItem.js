@@ -62,7 +62,7 @@ import { ADD_TO_CART, SHARE, VOICE } from '../assests/images';
 import { green, redColor } from '../constants/Color';
 
 const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
-  // console.log("navigation", item);
+  // console.log("navigation..", item);ß
   const [loading, setLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
 
@@ -83,7 +83,7 @@ const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
     setLoading(meta.isBuffering);
   };
   const videoUrl =
-    'https://d9h69f5ndiadk.cloudfront.net/storage/2024/June/week2/150_862716cb7c14fbfe75dfd3a7d7a9b053.mp4';
+    'https://cdn.shopify.com/videos/c/vp/474e4c3b8a9a423ebd3d9ccf3fda0281/474e4c3b8a9a423ebd3d9ccf3fda0281.HD-1080p-4.8Mbps-32573231.mp4';
   return (
     <View style={styles.container}>
       <TouchableOpacity

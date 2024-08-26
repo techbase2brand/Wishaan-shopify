@@ -791,7 +791,7 @@ function App({ navigation }: { navigation: any }) {
   const [isLoading, setIsLoading] = useState(true);
   const activeCollectionId = useSelector((state) => state.activeCollection.activeCollectionId);
   const titles = useSelector((state) => state.titles);
-console.log("activeCollectionId,",activeCollectionId, "titles",titles);
+// console.log("activeCollectionId,",activeCollectionId, "titles",titles);
   // useEffect(() => {
   //   dispatch(fetchVideosRequest());
   //   const fetchproduct = async () => {
@@ -872,6 +872,7 @@ console.log("activeCollectionId,",activeCollectionId, "titles",titles);
 
     fetchProduct();
   }, [activeCollectionId, dispatch]);
+  
   const cacheVideos = async (videoList) => {
     const MAX_CACHE_SIZE = 20; // Example maximum cache size
     const cachedVideos = await Promise.all(
@@ -988,7 +989,6 @@ console.log("activeCollectionId,",activeCollectionId, "titles",titles);
                       <SafeAreaView style={{ flex: 1 }}>
                         {/* <BottomTabNavigator/> */}
                         <AppWithNavigation />
-
                       </SafeAreaView>
                     </PersistGate>
                   </AuthProvider>
