@@ -70,13 +70,13 @@ const Header = ({ navigation, backIcon, text, onPress, textinput, notification, 
             {/* {totalQuantity > 0 && ( // Replace cartItemCount with your actual state or prop representing the item count
               <View style={styles.badgeContainer}>
                 <Text style={styles.badgeText}>{totalQuantity}</Text>
-              </View>
+              </View> 
             )} */}
-         {totalQuantity > 0 && ( // Replace cartItemCount with your actual state or prop representing the item count
+         {/* {totalQuantity > 0 && ( 
               <View style={styles.badgeContainer}>
                 <Text style={styles.badgeText}>{totalQuantity}</Text>
               </View>
-            )}
+            )} */}
           </TouchableOpacity>
         </View>
       </View>

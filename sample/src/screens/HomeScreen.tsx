@@ -226,11 +226,9 @@ console.log("productImagesAndTitles..",productImagesAndTitles);
         .then((result) => {
           const fetchedProducts = result?.data?.collection?.products?.edges;
 
-          console.log("fetchedProduct>>>",result?.data?.collection?.products?.edges);
 
           if (fetchedProducts) {
             const extractedData = fetchedProducts.map(product => {
-              console.log("extractedData",product.node.images.edges[0].node);
               
               return {
                 title: product.node.title,
@@ -244,6 +242,7 @@ console.log("productImagesAndTitles..",productImagesAndTitles);
     }
     fetchproduct();
   }, [])
+ 
  
   const sections = [
     {

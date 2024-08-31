@@ -2,14 +2,16 @@
 import {
   FETCH_VIDEOS_REQUEST,
   FETCH_VIDEOS_SUCCESS,
+  UPDATE_PAGINATION,
   FETCH_VIDEOS_FAILURE,
-  SET_CACHED_FILES,
 } from '../actions/videoActions';
 
 const initialState = {
   loading: false,
   videos: [],
   error: '',
+  endCursor: null,
+  hasNextPage: true,
 };
 
 export const videoReducer = (state = initialState, action) => {
@@ -25,7 +27,12 @@ export const videoReducer = (state = initialState, action) => {
         videos: action.payload,
         error: '',
       };
-
+      case UPDATE_PAGINATION:
+        return {
+          ...state,
+          hasNextPage: action.payload.hasNextPage,
+          endCursor: action.payload.endCursor,
+        };
     case FETCH_VIDEOS_FAILURE:
       return {
         loading: false,

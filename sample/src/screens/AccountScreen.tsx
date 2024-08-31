@@ -1,13 +1,239 @@
-import React from 'react';
+import React, { useContext, useState, useEffect } from 'react';
+
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import { useFocusEffect } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
+import ConfirmationModal from '../components/Modal/ConfirmationModal'
+import { AuthContext } from '../context/AuthProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import LoadingModal from '../components/Modal/LoadingModal';
+import { logout } from '../redux/actions/authActions';
+import { logEvent } from '@amplitude/analytics-react-native';
 import Header from '../components/Header';
 import { blackColor, redColor, whiteColor, lightShadeBlue, mediumGray, grayColor } from '../constants/Color'
+import { getAdminAccessToken, getStoreDomain, SIGN_OUT, DELETE, SHIPPING_ADDRESS, MY_WISHLIST, ORDERS, ARE_YOU_SURE_DELETE_ACCOUNT, ARE_YOU_SURE_SIGNOUT, STOREFRONT_DOMAIN, ADMINAPI_ACCESS_TOKEN } from '../constants/Constants';
+import { useThemes } from '../context/ThemeContext';
+import { lightColors, darkColors } from '../constants/Color';
 
 
 
 const AccountScreen = ({ navigation }) => {
+
+  const dispatch = useDispatch();
+  const selectedItem = useSelector((state) => state.menu.selectedItem);
+  // const STOREFRONT_DOMAIN = getStoreDomain(selectedItem)
+  // const ADMINAPI_ACCESS_TOKEN = getAdminAccessToken(selectedItem)
+  const { setIsLoggedIn } = useContext(AuthContext)
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [orders, setOrders] = useState([]);
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => { });
+  const [customerId, setCustomerId] = useState("")
+  const [customerAddresses, setCustomerAddresses] = useState([]);
+  const [userName, setUserName] = useState("");
+  const [image, setImage] = useState();
+  const [loading, setLoading] = useState(false)
+
+  const { isDarkMode, toggleTheme } = useThemes();
+  const colors = isDarkMode ? darkColors : lightColors;
+
+
+  useEffect(() => {
+    fetchUserDetails()
+    logEvent('ProfileScreen Initialized');
+  }, [])
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserDetails()
+      fetchImage();
+    }, [])
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      getCustomerAddress(customerId);
+      fetchUserProfile(customerId);
+      fetchOrders(customerId);
+    }, [customerId])
+  );
+
+  useEffect(() => {
+    getCustomerAddress(customerId);
+    fetchUserProfile(customerId);
+    fetchOrders(customerId);
+  }, [customerId])
+
+  //for get customer ID
+  const fetchUserDetails = async () => {
+    const userDetails = await AsyncStorage.getItem('userDetails')
+    if (userDetails) {
+      const userDetailsObject = JSON.parse(userDetails);
+      console.log(userDetailsObject)
+      const userId = userDetailsObject?.customer ? userDetailsObject?.customer.id : userDetailsObject?.id;
+      console.log("userDetailsObject", userId)
+      setCustomerId(userId)
+    }
+  };
+
+  //for get customer Profile
+  const fetchUserProfile = async (id) => {
+    console.log("fetchUserProfile", id)
+    try {
+      const response = await axios.get(`https://${STOREFRONT_DOMAIN}/admin/api/2024-01/customers/${id}.json`, {
+        headers: {
+          'X-Shopify-Access-Token': ADMINAPI_ACCESS_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Response fetchUserProfileDatar:', response.data);
+      const customer = response?.data?.customer;
+      setUserName(`${customer.first_name} ${customer.last_name}`);
+    } catch (error) {
+      console.error('Error fetching customer profile:', error);
+    }
+  };
+
+  //for get customer profile Image
+  const fetchImage = async () => {
+    const profileImage = await AsyncStorage.getItem('userImage')
+    setImage(profileImage)
+  };
+
+  //for get customer orders
+  const fetchOrders = async (id) => {
+    try {
+      console.log
+      const response = await axios.get(
+        `https://${STOREFRONT_DOMAIN}/admin/api/2024-04/orders.json?customer_id=${id}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            "X-Shopify-Access-Token": ADMINAPI_ACCESS_TOKEN
+          },
+        }
+      );
+      console.log("response.data.orders", response?.data?.orders);
+      setOrders(response?.data?.orders)
+    } catch (error) {
+      console.log('Error fetching orders:', error);
+    }
+  };
+
+  //for get customer Address
+  const getCustomerAddress = async (id) => {
+    // console.log("getCustomerAddress", id)
+    try {
+      const response = await axios.get(
+        `https://${STOREFRONT_DOMAIN}/admin/api/2024-04/customers/${id}.json`,
+        {
+          headers: {
+            'X-Shopify-Access-Token': ADMINAPI_ACCESS_TOKEN,
+          },
+        }
+      );
+      const customer = response?.data?.customer;
+      const addresses = customer?.addresses;
+      // console.log("customer.addresses", addresses)
+      setCustomerAddresses(addresses)
+      return addresses;
+    } catch (error) {
+      console.log('Error fetching customer address:', error);
+    }
+  };
+
+  //for toggle Modal
+  const toggleModal = (message: string, action: () => void) => {
+    setModalMessage(message);
+    setConfirmAction(() => action);
+    setShowModal(true);
+  };
+
+  //for SignOutAccount
+  const handleSignOut = async () => {
+    setLoading(true)
+    logEvent('SignOut Button Clicked');
+    dispatch(logout());
+    const signout = await AsyncStorage.removeItem('isUserLoggedIn');
+    await AsyncStorage.removeItem('userImage')
+    console.log("removed url", signout);
+    setShowModal(false);
+    setIsLoggedIn(false)
+    navigation.navigate('AuthStack');
+    logEvent('SignOut Seccess');
+    setLoading(false)
+    // navigation.dispatch(
+    //   CommonActions.reset({
+    //     index: 0,
+    //     routes: [{ name: 'AppWithNavigation' }],
+    //   })
+    // );
+  };
+
+  //for deleteAccount
+  const handleDelete = async () => {
+    logEvent('Delete Button Clicked');
+    try {
+      // const currentUser = auth().currentUser;
+      // if (currentUser) {
+      //   await currentUser.delete();
+      //   await AsyncStorage.removeItem('isUserLoggedIn');
+      //   dispatch(logout());
+      //   console.log('Firebase user deleted successfully.');
+      //   logEvent(`Firebase user deleted successfully.`);
+      // } else {
+      //   console.log('No user is currently signed in to Firebase.');
+      //   logEvent(`No user is currently signed in to Firebase.`);
+      // }
+      await axios.delete(
+        `https://${STOREFRONT_DOMAIN}/admin/api/2024-04/customers/${customerId}.json`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            "X-Shopify-Access-Token": ADMINAPI_ACCESS_TOKEN,
+          },
+        }
+      );
+      setLoading(true)
+      console.log(`Customer  deleted successfully.`);
+      await AsyncStorage.removeItem('isUserLoggedIn');
+      await AsyncStorage.removeItem('userImage')
+      await AsyncStorage.removeItem('userDetails')
+      setShowModal(false);
+      setIsLoggedIn(false)
+      dispatch(logout());
+      navigation.navigate('AuthStack');
+      logEvent('Delete Seccess');
+      setLoading(false)
+    } catch (error) {
+      setLoading(false)
+      console.log(`Error deleting customer :`, error);
+      logEvent(`Error deleting customer :${error}`);
+    }
+  };
+
+
+  const capitalizeFirstLetter = (str) => {
+    if (str.length === 0) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
+  const getInitials = (name) => {
+    return name ? name.charAt(0).toUpperCase() : '';
+  };
+
+  const FallbackAvatar = ({ name }) => (
+    <View style={[styles.fallbackAvatar, { borderColor: colors.grayColor }]}>
+      <Text style={styles.fallbackAvatarText}>{getInitials(name)}</Text>
+    </View>
+  );
+
+
+
+
   return (
     <ScrollView style={styles.container}>
       {/* {/ Header /} */}
@@ -72,7 +298,7 @@ const AccountScreen = ({ navigation }) => {
             </View>
             <Text style={styles.shortcutText}>Cart</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shortcut}  onPress={() => navigation.navigate("OrderHistory")}>
+          <TouchableOpacity style={styles.shortcut} onPress={() => navigation.navigate("OrderHistory")}>
             <View style={{ backgroundColor: "#FFF", borderWidth: 1, borderColor: "#E6E6E6", borderRadius: 100, height: 35, width: 35, alignItems: 'center', alignContent: "center", paddingTop: 6 }}>
 
               <Image
@@ -90,7 +316,7 @@ const AccountScreen = ({ navigation }) => {
           borderColor: "#E6E6E6",
           borderRadius: 10,
         }]}
-        onPress={() => navigation.navigate("OrderDetailsScreen")}>
+          onPress={() => navigation.navigate("OrderDetailsScreen")}>
           <View style={styles.sectionRow}>
             <Image
               source={require('../assests/AccountScreen/mydetails.png')}
@@ -117,7 +343,16 @@ const AccountScreen = ({ navigation }) => {
               paddingLeft: 10,
             }]}>Orders</Text>
           </View>
-          <TouchableOpacity style={styles.section} onPress={() => navigation.navigate("PickupAddressScreen")}>
+          <TouchableOpacity style={styles.section}
+            onPress={() =>
+                navigation.navigate("UserDashboardScreen", {
+                  from: SHIPPING_ADDRESS,
+                  address: customerAddresses
+                })
+              }
+            //   navigation.navigate("PickupAddressScreen")
+            // }
+          >
             <View style={styles.sectionRow}>
               <Image source={require('../assests/homeaddress.png')} style={{ width: 20, height: 20 }} />
               <Text style={styles.sectionText}>Address Book</Text>
@@ -194,7 +429,7 @@ const AccountScreen = ({ navigation }) => {
             <Icon name="chevron-right" size={24} color="black" />
           </TouchableOpacity>
           <View style={styles.sectionDivider} />
-          <TouchableOpacity style={styles.section} onPress={()=> navigation.navigate("ReportIssueScreen")}>
+          <TouchableOpacity style={styles.section} onPress={() => navigation.navigate("ReportIssueScreen")}>
             <View style={styles.sectionRow}>
               <AntDesign name="exclamationcircleo" size={20} color="black" />
               <Text style={styles.sectionText}>Report a Issue</Text>
@@ -202,7 +437,7 @@ const AccountScreen = ({ navigation }) => {
             <Icon name="chevron-right" size={24} color="black" />
           </TouchableOpacity>
           <View style={styles.sectionDivider} />
-          <TouchableOpacity style={styles.section} onPress={()=>navigation.navigate("HelpCenter")}>
+          <TouchableOpacity style={styles.section} onPress={() => navigation.navigate("HelpCenter")}>
             <View style={styles.sectionRow}>
               <Image source={require('../assests/AccountScreen/help.png')} style={{ width: 24, height: 24, resizeMode: "contain" }} />
 

@@ -66,6 +66,8 @@ export const CartProvider: React.FC<PropsWithChildren> = ({ children }) => {
       case 'remove':
         return new Set([...state].filter(id => id !== action.variantId));
       default:
+        console.log("new error ",);
+        
         throw new Error();
     }
   };

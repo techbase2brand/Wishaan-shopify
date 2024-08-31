@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ImageBackground, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Dimensions, Image, ImageBackground, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Video from 'react-native-video';
 import convertToProxyURL from 'react-native-video-cache';
@@ -27,9 +27,11 @@ import { useThemes } from '../context/ThemeContext';
 import { lightColors, darkColors } from '../constants/Color';
 
 const { alignJustifyCenter, textAlign, positionAbsolute, resizeModeContain, flexDirectionRow, flex, borderRadius10, justifyContentSpaceBetween, alignItemsCenter } = BaseStyle;
+const { height, width } = Dimensions.get('window');
 
 const UserDashboardScreen = () => {
   const selectedItem = useSelector((state) => state.menu.selectedItem);
+  // const wishList = useSelector(state => state.wishlist.wishlist);
   // const STOREFRONT_DOMAIN = getStoreDomain(selectedItem)
   // const ADMINAPI_ACCESS_TOKEN = getAdminAccessToken(selectedItem)
   const { addToCart, addingToCart } = useCart();
@@ -110,22 +112,75 @@ const UserDashboardScreen = () => {
       const data = await response.json();
       await AsyncStorage.setItem('isDefaultAddress', JSON.stringify(addressId));
       setDefaultAddressId(addressId);
-      console.log('Set default address response:', data);
     } catch (error) {
       console.error('Error setting default address:', error);
     }
   }
 
   const addToCartProduct = async (item: any, quantity: any) => {
-    const variantId = item?.variants?.edges ? item?.variants?.edges[0]?.node?.id : item?.variants?.nodes ? item?.variants?.nodes[0].id : item?.variants[0]?.admin_graphql_api_id;
-    console.log(variantId)
-    setLoadingProductId(variantId);
-    await addToCart(variantId, quantity);
+    console.log("varientiddd",item.variants[0].variantId);
+    
+    const variantId = item.variants[0].variantId ? item.variants[0].variantId : item?.variants?.nodes ? item?.variants?.nodes[0].id : item?.variants[0]?.admin_graphql_api_id;
+    setLoadingProductId(item.variants[0].variantId);
+    await addToCart(item.variants[0].variantId, quantity);
     Toast.show(`${quantity} item${quantity !== 1 ? 's' : ''} added to cart`);
     setLoadingProductId(null);
   };
 
+  const VIDEO_DURATION = 5000; // 5 seconds
+  const [visibleVideoIndices, setVisibleVideoIndices] = useState([]);
+  const [playingIndex, setPlayingIndex] = useState(0);
+  const timerRef = useRef(null);
 
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
+
+  const clearAllTimers = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const togglePlayingVideo = () => {
+    setPlayingIndex((prevIndex) => (prevIndex + 1) % visibleVideoIndices.length);
+  };
+
+  useEffect(() => {
+    clearAllTimers();
+    if (visibleVideoIndices.length > 0) {
+      setPlayingIndex(0);
+      timerRef.current = setInterval(togglePlayingVideo, VIDEO_DURATION);
+    }
+    return () => clearAllTimers();
+  }, [visibleVideoIndices]);
+
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    const newVisibleIndices = viewableItems.map(item => item.index);
+    if (newVisibleIndices.join() !== visibleVideoIndices.join()) {
+      setVisibleVideoIndices(newVisibleIndices);
+    }
+  }).current;
+
+
+
+
+
+
+  // const renderItem = ({ item, index }) => {
+  //   return (
+  //     <View style={{ height: height / 3, width: width }}>
+  //       <Video
+  //         source={{ uri: item.uri }}
+  //         ref={ref => (videoRefs.current[index] = ref)}
+  //         style={{ height: '100%', width: '100%' }}
+  //         paused={index !== currentVideoIndex}
+  //         onBuffer={() => handleVideoBuffer(index)}
+  //       />
+  //     </View>
+  //   );
+  // };
   const staticWishList = [
     {
       id: '1',
@@ -168,6 +223,9 @@ const UserDashboardScreen = () => {
       }
     }
   ];
+
+  console.log("customerAddressescustomerAddresses", customerAddresses);
+
   return (
     <KeyboardAvoidingView
       style={[flex]}
@@ -264,80 +322,88 @@ const UserDashboardScreen = () => {
         }
         {
           route.params?.from === "Saved" &&
-          // (wishList && wishList.length > 0 ?
-          <View style={[styles.detailsBox]}>
-            <FlatList
-              data={staticWishList}
-              keyExtractor={(item) => item?.id?.toString()}
-              numColumns={2}
-              renderItem={({ item, index }) => {
-                const imageUrl = item?.images?.edges?.[0]?.node?.url ?? item?.images?.nodes?.[0]?.url ?? item?.images?.[0]?.src;
-                const itemPrice = item?.variants?.edges?.[0]?.node?.price?.amount ?? item?.variants?.nodes?.[0]?.price ?? item?.variants?.[0]?.price;
-                const itemCurrencyCode = item?.variants?.edges?.[0]?.node?.price?.currencyCode ?? null;
-                const inventoryQuantity = item?.variants?.nodes ? item?.variants?.nodes[0]?.inventoryQuantity : (item?.variants?.[0]?.inventory_quantity ? item?.variants?.[0]?.inventory_quantity : (Array.isArray(item?.inventoryQuantity) ? item?.inventoryQuantity[0] : item?.inventoryQuantity));
-                const variantId = item?.variants?.edges ? item?.variants.edges[0]?.node.id : item.variants.nodes ? item.variants.nodes[0].id : item.variants[0].admin_graphql_api_id;
-                return (
-                  <View style={[styles.itemContainer]}>
-                    <Pressable style={[positionAbsolute, alignJustifyCenter, styles.favButton, { backgroundColor: "white", borderRadius: 100, padding: 4 }]} onPress={() => handlePress(item)}>
-                      <AntDesign
-                        name={"heart"}
-                        size={18}
-                        color={colors.redColor}
-                      />
-                    </Pressable>
+          (wishList && wishList.length > 0 ?
+            <View style={[styles.detailsBox]}>
+              <FlatList
+                // ref={flatListRef}
+                data={wishList}
+                keyExtractor={(item) => item?.id?.toString()}
+                numColumns={3}
+                renderItem={({ item, index }) => {
+                  const isPlaying = visibleVideoIndices[playingIndex] === index;
+                  const imageUrl = item?.url
+                  // const imageUrl = item?.images?.edges?.[0]?.node?.url ?? item?.images?.nodes?.[0]?.url ?? item?.images?.[0]?.src;
+                  const itemPrice = item?.variants?.edges?.[0]?.node?.price?.amount ?? item?.variants?.nodes?.[0]?.price ?? item?.variants?.[0]?.price;
+                  const itemCurrencyCode = item?.variants?.edges?.[0]?.node?.price?.currencyCode ?? null;
+                  const inventoryQuantity = item?.variants?.nodes ? item?.variants?.nodes[0]?.inventoryQuantity : (item?.variants?.[0]?.inventory_quantity ? item?.variants?.[0]?.inventory_quantity : (Array.isArray(item?.inventoryQuantity) ? item?.inventoryQuantity[0] : item?.inventoryQuantity));
+                  // const variantId = item?.variants?.edges ? item?.variants.edges[0]?.node.id : item.variants.nodes ? item.variants.nodes[0].id : item.variants[0].admin_graphql_api_id;
+                  return (
+                    <View style={[styles.itemContainer]}>
+                      <Pressable style={[positionAbsolute, alignJustifyCenter, styles.favButton, { backgroundColor: "white", borderRadius: 100, padding: 4 }]} onPress={() => handlePress(item)}>
+                        <AntDesign
+                          name={"heart"}
+                          size={18}
+                          color={colors.redColor}
+                        />
+                      </Pressable>
 
-                    <Pressable style={[positionAbsolute, alignJustifyCenter, styles.favButton1]} onPress={() => handlePress(item)}>
-                      <Image source={REEL_PLAY_WHITE}
-                        style={{
-                          width: 25,
-                          height: 25,
-                        }} />
-                    </Pressable>
-                    {/* <Image
+                      <Pressable style={[positionAbsolute, alignJustifyCenter, styles.favButton1]} onPress={() => handlePress(item)}>
+                        <Image source={REEL_PLAY_WHITE}
+                          style={{
+                            width: 25,
+                            height: 25,
+                          }} />
+                      </Pressable>
+                      {/* <Image
                         source={{ uri: imageUrl }}
                         style={[styles.productImage ]}
                       /> */}
 
 
-                    <TouchableOpacity style={{width:170, height: hp(20), borderRadius:10,overflow:"hidden" }} onPress={()=> navigation.navigate("ProductDetails")}>
-                      <Video
-                        bufferConfig={{
-                          minBufferMs: 2000,
-                          maxBufferMs: 5000,
-                          bufferForPlaybackMs: 1000,
-                          bufferForPlaybackAfterRebufferMs: 1500,
-                        }}
-                        source={{ uri: convertToProxyURL(imageUrl) }}
-                        style={{width:"100%", height:"100%"}}
-                        resizeMode="cover"
-                        repeat={true}
-                        maxBitRate={2000000}
-                        hideShutterView={true}
-                        onBuffer={e => {
-                          console.log('e.isBuffering', e.isBuffering);
-                          if (e.isBuffering == true) {
-                            // setLoading(true);
-                          } else {
-                            // setLoading(false);
-                          }
-                        }}
-                      />
-                    </TouchableOpacity>
-
-                    <View style={{ width: "100%", height: hp(7), alignItems: "center", justifyContent: "center" }}>
-                      <Text style={[styles.wishListItemName, { color: colors.blackColor }]}>{item?.title}</Text>
-                      {/* <Text style={[styles.wishListItemPrice]}>{itemCurrencyCode}</Text> */}
-
-                    </View>
-                    <View style={[{ width: "100%", flexDirection: "row", paddingTop: 1, justifyContent: "space-between" }]}>
-                      {itemPrice && <View style={{ paddingTop: 8 }}>
-                        <Text style={[styles.wishListItemPrice, { color: colors.blackColor }]}>{itemPrice} </Text>
-                      </View>
-                      }
-                      <TouchableOpacity style={styles.buyButton}>
-                        <Text style={{ color: '#fff', alignSelf: 'center' }}>Buy Now</Text>
+                      <TouchableOpacity
+                        style={{ width: 170, height: hp(20), borderRadius: 10, overflow: "hidden" }}
+                        // style={{ height: height / 3, width: width,borderRadius:10,overflow:"hidden" }}
+                        onPress={() => navigation.navigate("ProductDetails")}>
+                        <Video
+                          bufferConfig={{
+                            minBufferMs: 2000,
+                            maxBufferMs: 5000,
+                            bufferForPlaybackMs: 1000,
+                            bufferForPlaybackAfterRebufferMs: 1500,
+                          }}
+                          source={{ uri: convertToProxyURL(imageUrl) }}
+                          // ref={ref => (videoRefs.current[index] = ref)}
+                          style={{ height: '100%', width: '100%' }}
+                          paused={!isPlaying}
+                          resizeMode="cover"
+                          repeat={true}
+                          maxBitRate={2000000}
+                          hideShutterView={true}
+                          onBuffer={e => {
+                            console.log('e.isBuffering', e.isBuffering);
+                            if (e.isBuffering == true) {
+                              // setLoading(true);
+                            } else {
+                              // setLoading(false);
+                            }
+                          }}
+                        />
                       </TouchableOpacity>
-                      {/* {inventoryQuantity <= 0 ? <Pressable
+
+                      <View style={{ width: "100%", height: hp(7), alignItems: "center", justifyContent: "center" }}>
+                        <Text style={[styles.wishListItemName, { color: colors.blackColor }]}>{item?.title}</Text>
+                        {/* <Text style={[styles.wishListItemPrice]}>{itemCurrencyCode}</Text> */}
+
+                      </View>
+                      <View style={[{ width: "100%", flexDirection: "row", paddingTop: 1, justifyContent: "space-between" }]}>
+                        {itemPrice && <View style={{ paddingTop: 8 }}>
+                          <Text style={[styles.wishListItemPrice, { color: colors.blackColor }]}>{itemPrice} </Text>
+                        </View>
+                        }
+                        <TouchableOpacity style={styles.buyButton} >
+                          <Text style={{ color: '#fff', alignSelf: 'center' }} onPress={() => addToCartProduct(item, 1)}>Buy Now</Text>
+                        </TouchableOpacity>
+                        {/* {inventoryQuantity <= 0 ? <Pressable
                           style={[styles.addtocartButton, borderRadius10, alignJustifyCenter]}
                         >
                           <Text style={styles.addToCartButtonText}>Out of stock</Text>
@@ -349,68 +415,100 @@ const UserDashboardScreen = () => {
                             {loadingProductId === variantId ? <ActivityIndicator size="small" color={whiteColor} /> :
                               <Text style={styles.addToCartButtonText}>Add To Cart</Text>}
                           </Pressable>} */}
+                      </View>
                     </View>
-                  </View>
-                );
-              }}
-            />
-          </View>
-          // :
-          // <View style={[styles.centeredContainer, alignJustifyCenter, { width: wp(80), alignSelf: "center" }]}>
-          //   <View>
-          //     <AntDesign
-          //       name={"hearto"}
-          //       size={50}
-          //       color={colors.mediumGray}
-          //     />
-          //   </View>
-          //   <Text style={{ color: colors.blackColor, fontSize: style.fontSizeLarge.fontSize }}>No Saved found.</Text>
-          //   <Text style={{ color: colors.mediumGray, textAlign: "center" }}>You don’t have any saved items. Go to home and add some.</Text>
-          // </View>)
+                  );
+                }}
+                onViewableItemsChanged={onViewableItemsChanged}
+                contentContainerStyle={{ paddingBottom: 100, }}
+                viewabilityConfig={viewabilityConfig}
+              />
+            </View>
+            :
+            <View style={[styles.centeredContainer, alignJustifyCenter, { width: wp(80), alignSelf: "center" }]}>
+              <View>
+                <AntDesign
+                  name={"hearto"}
+                  size={50}
+                  color={colors.mediumGray}
+                />
+              </View>
+              <Text style={{ color: colors.blackColor, fontSize: style.fontSizeLarge.fontSize }}>No Saved found.</Text>
+              <Text style={{ color: colors.mediumGray, textAlign: "center" }}>You don’t have any saved items. Go to home and add some.</Text>
+            </View>)
         }
         {
           route.params?.from === SHIPPING_ADDRESS &&
-          (customerAddresses && customerAddresses.length > 0 ? <View style={[styles.centeredContainer]}>
-            <Text style={[styles.itemText, { marginVertical: spacings.normal, color: colors.blackColor }]}>Saved Address</Text>
-            <FlatList
-              data={customerAddresses}
-              keyExtractor={(item) => item?.id.toString()}
-              renderItem={({ item }) => {
-                const isSelected = defaultAddressId === item?.id;
-                return (
-                  <Pressable style={[{ padding: spacings.large, borderWidth: 1, width: "100%", borderRadius: 10, marginVertical: 5, borderColor: colors.blackColor, backgroundColor: isDarkMode ? grayColor : "tranparent" }, flexDirectionRow]}
-                    onPress={() => [setSelectedAddressId(item.id), setDefaultAddress(item?.id)]}>
-                    <View style={[{ width: "15%" }, alignJustifyCenter]}>
-                      <Ionicons
-                        name={"location"}
-                        size={30}
-                        color={redColor}
-                      />
-                    </View>
-                    <View style={{ width: "75%" }}>
-                      {item.name && <View style={[flexDirectionRow]}>
-                        <View style={{ width: "25%" }}>
+          (customerAddresses && customerAddresses.length > 0 ?
+            <View style={[styles.centeredContainer]}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginHorizontal: 16,
+              }}>
+                <View style={{
+                  flex: 1,
+                  height: 1,
+                  backgroundColor: '#E6E6E6',
+                }} />
+                <Text style={[styles.itemText,{marginVertical:10, fontWeight:"400",marginHorizontal: 8}]}>SAVED ADDRESS</Text>
+                <View style={{
+                  flex: 1,
+                  height: 1,
+                  backgroundColor: '#E6E6E6',
+                }} />
+              </View>
+              {/* <Text style={[styles.itemText, { marginVertical: spacings.normal, color: colors.blackColor }]}>Saved Address</Text> */}
+              <FlatList
+                data={customerAddresses}
+                keyExtractor={(item) => item?.id.toString()}
+                renderItem={({ item }) => {
+                  const isSelected = defaultAddressId === item?.id;
+                  return (
+                    <Pressable style={[{ padding: spacings.large, borderWidth: 1, width: "100%", borderRadius: 10, marginVertical: 5, borderColor: "#E6E6E6", backgroundColor: isDarkMode ? grayColor : "tranparent" }, flexDirectionRow]}
+                      onPress={() => [setSelectedAddressId(item.id), setDefaultAddress(item?.id)]}>
+                      <View style={[{ width: "15%" }, alignJustifyCenter]}>
+                        <Ionicons
+                          name={"location"}
+                          size={30}
+                          color={redColor}
+                        />
+                      </View>
+                      <View style={{ width: "75%" }}>
+                        {item.name && <View style={[flexDirectionRow,]}>
+                          {/* <View style={{ width: "25%" }}>
                           <Text style={[styles.additemText, { color: colors.blackColor }]}>Name</Text>
+                        </View> */}
+                          {/* <View style={{ width: "5%" }}>
+                          <Text style={[styles.additemText, { color: colors.blackColor }]}>:</Text>
+                        </View> */}
+                          <View style={{ width: "50%" }}>
+                            <Text style={[styles.additemText, { color: colors.blackColor, fontWeight: "700" }]}>{item.first_name}</Text>
+                          </View>
+                        </View>}
+                        <View style={[flexDirectionRow]}>
+                          {/* <View style={{ width: "25%" }}>
+                          <Text style={[styles.additemText, { color: colors.blackColor }]}>Address</Text>
                         </View>
                         <View style={{ width: "5%" }}>
                           <Text style={[styles.additemText, { color: colors.blackColor }]}>:</Text>
+                        </View> */}
+                          <View style={{ width: "90%", marginVertical: 5 }}>
+                            <Text style={[styles.additemText, { color: colors.blackColor }]}>{`${item.address1}, ${item.city}, ${item.province}, ${item.country}-${item.zip}`}</Text>
+                          </View>
                         </View>
-                        <View style={{ width: "50%" }}>
-                          <Text style={[styles.additemText, { color: colors.blackColor }]}>{item.name}</Text>
-                        </View>
-                      </View>}
-                      {item.phone && <View style={[flexDirectionRow]}>
-                        <View style={{ width: "25%" }}>
-                          <Text style={[styles.additemText, { color: colors.blackColor }]}>Phone</Text>
-                        </View>
-                        <View style={{ width: "5%" }}>
+                        {item.phone && <View style={[flexDirectionRow]}>
+                          <View style={{ width: "40%" }}>
+                            <Text style={[styles.additemText, { color: colors.blackColor }]}>Phone Number:</Text>
+                          </View>
+                          {/* <View style={{ width: "5%" }}>
                           <Text style={[styles.additemText, { color: colors.blackColor }]}>:</Text>
-                        </View>
-                        <View style={{ width: "50%" }}>
-                          <Text style={[styles.additemText, { color: colors.blackColor }]}>{item.phone}</Text>
-                        </View>
-                      </View>}
-                      <View style={[flexDirectionRow]}>
+                        </View> */}
+                          <View style={{ width: "50%" }}>
+                            <Text style={[styles.additemText, { color: colors.blackColor }]}>{item.phone}</Text>
+                          </View>
+                        </View>}
+                        {/* <View style={[flexDirectionRow]}>
                         <View style={{ width: "25%" }}>
                           <Text style={[styles.additemText, { color: colors.blackColor }]}>Address</Text>
                         </View>
@@ -420,23 +518,24 @@ const UserDashboardScreen = () => {
                         <View style={{ width: "70%" }}>
                           <Text style={[styles.additemText, { color: colors.blackColor }]}>{`${item.address1}, ${item.city}, ${item.province}, ${item.country}-${item.zip}`}</Text>
                         </View>
+                      </View> */}
                       </View>
-                    </View>
-                    <View style={[{ width: "10%" }, alignJustifyCenter]}>
-                      <Fontisto
-                        name={isSelected ? "radio-btn-active" : "radio-btn-passive"}
-                        size={20}
-                        color={redColor}
-                      />
-                    </View>
-                  </Pressable>
-                );
-              }}
-            />
-            <Pressable style={[styles.addAddressButtonRounded, positionAbsolute, alignJustifyCenter]} onPress={onPressAddAddress}>
-              <AntDesign name={"plus"} size={28} color={whiteColor} />
-            </Pressable>
-          </View> :
+                      <View style={[{ width: "10%" }, alignJustifyCenter]}>
+                        <Fontisto
+                          name={isSelected ? "radio-btn-active" : "radio-btn-passive"}
+                          size={20}
+                          color={redColor}
+                        />
+                      </View>
+                    </Pressable>
+                  );
+                }}
+              />
+              <Pressable style={[styles.addAddressButtonRounded, positionAbsolute, alignJustifyCenter]} onPress={onPressAddAddress}>
+                <AntDesign name={"plus"} size={28} color={whiteColor} />
+              </Pressable>
+            </View>
+            :
             <View style={[styles.centeredContainer, alignJustifyCenter]}>
               <Text style={{ color: colors.blackColor }}>No address found.</Text>
               <Pressable style={styles.button} onPress={() => onPressContinueShopping(SHIPPING_ADDRESS)}>
@@ -445,7 +544,8 @@ const UserDashboardScreen = () => {
               <Pressable style={[styles.addAddressButtonRounded, positionAbsolute, alignJustifyCenter]} onPress={onPressAddAddress}>
                 <AntDesign name={"plus"} size={28} color={whiteColor} />
               </Pressable>
-            </View>)
+            </View>
+          )
         }
         {modalVisible && <AddAddressModal visible={modalVisible} onClose={() => setModalVisible(false)} />}
       </ImageBackground>
@@ -494,12 +594,12 @@ const styles = StyleSheet.create({
     color: whiteColor,
   },
   addAddressButtonRounded: {
-    bottom: 50,
+    bottom: 150,
     right: 20,
     width: wp(15),
-    height: hp(7.5),
+    height: hp(7),
     backgroundColor: redColor,
-    borderRadius: 50
+    borderRadius: 100
   },
   addAddressButton: {
     bottom: 50,
@@ -510,9 +610,10 @@ const styles = StyleSheet.create({
     alignSelf: "center"
   },
   detailsBox: {
+    // flex:1,
     width: wp(100),
-    height: hp(87),
-    padding: spacings.large
+    height: hp(80),
+    padding: spacings.large,
   },
   productImage: {
     width: "100%",
@@ -550,7 +651,6 @@ const styles = StyleSheet.create({
     width: "68%",
     backgroundColor: redColor,
     padding: spacings.normal,
-
   },
   buyButton: {
     height: 30,

@@ -38,6 +38,7 @@ function CartScreen({ navigation }: { navigation: any }): React.JSX.Element {
   const styles = createStyles(colors);
   const dispatch = useDispatch();
   const userLoggedIn = useSelector(state => state.auth.isAuthenticated);
+console.log("datadata112",data?.cart.lines.edges[0]?.node);
 
   useEffect(() => {
     if (cartId) {
@@ -51,9 +52,9 @@ function CartScreen({ navigation }: { navigation: any }): React.JSX.Element {
     console.log("Cart ID:", cartId);
   }, [fetchCart, cartId]);
 
-  useEffect(() => {
-    logEvent('CartScreen');
-  }, [])
+  // useEffect(() => {
+  //   logEvent('CartScreen');
+  // }, [])
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -112,20 +113,20 @@ function CartScreen({ navigation }: { navigation: any }): React.JSX.Element {
     );
   }
 
-  if (loading) {
-    return (
-      <ImageBackground source={isDarkMode ? BACKGROUND_IMAGE : ""} style={[styles.loading, alignJustifyCenter, flex, { backgroundColor: themecolors.whiteColor }]}>
-        <Header
-          backIcon={true}
-          navigation={navigation}
-          text={"MyCart"} />
-        <View style={[flex, alignJustifyCenter]}>
-          <ActivityIndicator size="small" />
-          <Text style={styles.loadingText}>{LOADING_CART}</Text>
-        </View>
-      </ImageBackground>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <ImageBackground source={isDarkMode ? BACKGROUND_IMAGE : ""} style={[styles.loading, alignJustifyCenter, flex, { backgroundColor: themecolors.whiteColor }]}>
+  //       <Header
+  //         backIcon={true}
+  //         navigation={navigation}
+  //         text={"MyCart"} />
+  //       <View style={[flex, alignJustifyCenter]}>
+  //         <ActivityIndicator size="small" />
+  //         <Text style={styles.loadingText}>{LOADING_CART}</Text>
+  //       </View>
+  //     </ImageBackground>
+  //   );
+  // }
 
   // if (!data || !data.cart || data?.cart?.lines?.edges?.length === 0 || !cartId) {
   //   return (
@@ -154,45 +155,7 @@ function CartScreen({ navigation }: { navigation: any }): React.JSX.Element {
     Toast.show('Item removed from cart')
     logEvent(`Item removed from cart variantId:${variantId} `);
   };
-  // const handleadddToCart = async (id: string, quantity: number) => {
-
-  //   await addToCart(id, quantity);
-  //   Toast.show('Item added to cart')
-  // };
-
-  // const handleRemoveOneFromCart = async (variantId: string, quantity: number) => {
-  //   console.log(variantId)
-  //   // const locale = 'en';
-  //   console.log(variantId, quantity)
-  //   await removeOneFromCart(variantId, quantity);
-  //   dispatch(removeProductFromCart(variantId, quantity));
-  //   // dispatch(removeProductInCart(variantId));
-  //   Toast.show('Item removed from cart')
-  //   // const url = `https://${STOREFRONT_DOMAIN}/${locale}/cart/change.js`;
-
-  //   // const payload = {
-  //   //   id: variantId,
-  //   //   quantity: quantity
-  //   // };
-
-  //   // try {
-  //   //   const response = await axios.post(url, payload, {
-  //   //     headers: {
-  //   //       'Content-Type': 'application/json'
-  //   //     }
-  //   //   });
-
-  //   //   // Handle the response
-  //   //   // console.log('Cart updated successfully:', response.data);
-  //   //   return response.data;
-  //   // } catch (error) {
-  //   //   // Handle the error
-  //   //   console.error('Error updating cart:', error);
-  //   //   throw error;
-  //   // }
-
-  // };
-
+ 
   const getTotalAmount = () => {
     let totalAmount = 0;
     let currencyCode = '';
@@ -283,21 +246,17 @@ function CartScreen({ navigation }: { navigation: any }): React.JSX.Element {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }>
           <View style={styles.productList}>
-            {/* {data?.cart?.lines?.edges.map(({ node }) => ( */}
+            {data?.cart?.lines?.edges.map(({ node }) => (
             <CartItem
-            // key={node?.merchandise?.id}
-            // item={node}
-            // quantity={node?.quantity}
-            // loading={addingToCart?.has(node?.id)}
-            // onRemove={(variantId) => handleRemoveToCart(variantId)}
-            // onAddCartItem={(variantId, qty) => handleadddToCart(variantId, qty)}
-            // onHandleRemoveOneFromCart={(variantId, qty) => handleRemoveOneFromCart(variantId, qty)}
+            key={node?.merchandise?.id}
+            item={node}
+            quantity={node?.quantity}
+            loading={addingToCart?.has(node?.id)}
+            onRemove={(variantId) => handleRemoveToCart(variantId)}
+            onAddCartItem={(variantId, qty) => handleadddToCart(variantId, qty)}
+            onHandleRemoveOneFromCart={(variantId, qty) => handleRemoveOneFromCart(variantId, qty)}
             />
-            <CartItem />
-            <CartItem />
-
-
-            {/* ))} */}
+           ))} 
             {/*
             {((data?.cart?.lines) ? (data?.cart?.lines?.edges) : cartItemsFromRedux).map((item) => {
               const node = data?.cart?.lines ? item.node : item;
@@ -316,7 +275,7 @@ function CartScreen({ navigation }: { navigation: any }): React.JSX.Element {
           <View style={{ marginVertical: 10, marginLeft: 10 }}>
             <View style={{ flexDirection: 'row', justifyContent: "space-between", marginBottom: 10, width: wp(95) }}>
               {/* <Image source={REEL_PLAY_BLACK} style={styles.reelIcon} /> */}
-              <Text
+              {/* <Text
                 style={{
                   fontSize: 18,
                   marginTop: 5,
@@ -333,10 +292,10 @@ function CartScreen({ navigation }: { navigation: any }): React.JSX.Element {
                   color: redColor,
                 }}>
                 See All
-              </Text>
+              </Text> */}
             </View>
             {/* </View> */}
-            <FlatList
+            {/* <FlatList
               data={Videos}
               horizontal
               pagingEnabled
@@ -345,10 +304,10 @@ function CartScreen({ navigation }: { navigation: any }): React.JSX.Element {
               keyExtractor={item => item.video_id}
               onViewableItemsChanged={onViewableItemsChanged1}
               viewabilityConfig={viewabilityConfig1}
-            // getItemLayout={(data, index) => (
-            //   { length: width, offset: width * index, index }
-            // )}
-            />
+            getItemLayout={(data, index) => (
+              { length: width, offset: width * index, index }
+            )}
+            /> */}
 
           </View>
 
@@ -430,6 +389,7 @@ function CartItem({
   // onAddCartItem: (variantId: string, qty: number) => void;
   // onHandleRemoveOneFromCart: (variantId: string, quantityToRemove: number) => void;
 }) {
+  
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const { isDarkMode } = useThemes();
@@ -473,8 +433,8 @@ function CartItem({
       <View style={[styles.productText, flex, alignJustifyCenter, flexDirectionRow]}>
         <View style={[flex]}>
           <Text style={[styles.productTitle, { color: themecolors.blackColor }]}>
-            {/* {item?.merchandise?.product?.title} */}
-            Regular Fit Black
+            {item?.merchandise?.product?.title}
+            {/* Regular Fit Black */}
           </Text>
           <Text style={[styles.productTitle, { color: themecolors.blackColor, fontSize: 12, marginBottom: 20 }]}>
             {/* {item?.merchandise?.product?.title} */}
@@ -506,7 +466,7 @@ function CartItem({
             <TouchableOpacity onPress={decrementQuantity}>
               <Text style={[styles.quantityButton, borderWidth1, { color: themecolors.blackColor, borderColor: "#E6E6E6" }]}>-</Text>
             </TouchableOpacity>
-            <Text style={[styles.quantity, { color: themecolors.blackColor }]}>2</Text>
+            <Text style={[styles.quantity, { color: themecolors.blackColor }]}>1</Text>
             <TouchableOpacity onPress={incrementQuantity}>
               <Text style={[styles.quantityButton, borderWidth1, { color: themecolors.blackColor, borderColor: "#E6E6E6" }]}>+</Text>
             </TouchableOpacity>

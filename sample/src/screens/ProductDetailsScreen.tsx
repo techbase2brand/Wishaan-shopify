@@ -243,6 +243,7 @@ function ProductDetails({
   const [shareProductloading, setShareProductLoading] = useState(false);
   const [shopCurrency, setShopCurrency] = useState('');
   const selectedItem = useSelector((state) => state.menu.selectedItem);
+  
   // const STOREFRONT_ACCESS_TOKEN = getStoreFrontAccessToken(selectedItem)
   // const STOREFRONT_DOMAIN = getStoreDomain(selectedItem)
   // const ADMINAPI_ACCESS_TOKEN = getAdminAccessToken(selectedItem)
@@ -458,6 +459,44 @@ function ProductDetails({
     ),
     [visibleVideoIndices, playingIndex]
   );
+
+  // const VIDEO_DURATION = 5000; // 5 seconds
+  const [visibleVideoIndicesSaved, setVisibleVideoIndicesSaved] = useState([]);
+  const [playingIndexSaved, setPlayingIndexSaved] = useState(0);
+  // const timerRef = useRef(null);
+
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
+
+  const SavedclearAllTimers = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const togglePlayingVideoSaved = () => {
+    setPlayingIndexSaved((prevIndex) => (prevIndex + 1) % visibleVideoIndicesSaved.length);
+  };
+
+  useEffect(() => {
+    clearAllTimers();
+    if (visibleVideoIndicesSaved.length > 0) {
+      setPlayingIndexSaved(0);
+      timerRef.current = setInterval(togglePlayingVideoSaved, VIDEO_DURATION);
+    }
+    return () => SavedclearAllTimers();
+  }, [visibleVideoIndicesSaved]);
+
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    const newVisibleIndices = viewableItems.map(item => item.index);
+    if (newVisibleIndices.join() !== visibleVideoIndicesSaved.join()) {
+      setVisibleVideoIndicesSaved(newVisibleIndices);
+    }
+  }).current;
+
+
   const staticWishList = [
     {
       id: '1',
@@ -500,6 +539,9 @@ function ProductDetails({
     //   }
     // }
   ];
+  
+  console.log("productproductproduct",product);
+  
   return (
     <View>
       <ScrollView
@@ -552,7 +594,7 @@ function ProductDetails({
             <View>
               <View style={[flexDirectionRow, { width: "100%" }]}>
                 <View style={{ width: "90%" }}>
-                  <Text style={[styles.productTitle, { color: themecolors.blackColor }]}>Regular Fit Slogen</Text>
+                  <Text style={[styles.productTitle, { color: themecolors.blackColor }]}>{product?.title}</Text>
                 </View>
                 <TouchableOpacity style={[alignJustifyCenter, styles.shareButton]} onPress={() => shareProduct(product.id)}>
                   <Image
@@ -747,11 +789,13 @@ function ProductDetails({
 
             <View style={[styles.detailsBox]}>
               <FlatList
-                data={staticWishList}
+                data={wishList}
                 keyExtractor={(item) => item?.id?.toString()}
-                numColumns={2}
+                numColumns={3}
                 renderItem={({ item, index }) => {
-                  const imageUrl = item?.images?.edges?.[0]?.node?.url ?? item?.images?.nodes?.[0]?.url ?? item?.images?.[0]?.src;
+                  const isPlaying = visibleVideoIndicesSaved[playingIndexSaved] === index;
+                  const imageUrl = item?.url
+                  // const imageUrl = item?.images?.edges?.[0]?.node?.url ?? item?.images?.nodes?.[0]?.url ?? item?.images?.[0]?.src;
                   const itemPrice = item?.variants?.edges?.[0]?.node?.price?.amount ?? item?.variants?.nodes?.[0]?.price ?? item?.variants?.[0]?.price;
                   const itemCurrencyCode = item?.variants?.edges?.[0]?.node?.price?.currencyCode ?? null;
                   const inventoryQuantity = item?.variants?.nodes ? item?.variants?.nodes[0]?.inventoryQuantity : (item?.variants?.[0]?.inventory_quantity ? item?.variants?.[0]?.inventory_quantity : (Array.isArray(item?.inventoryQuantity) ? item?.inventoryQuantity[0] : item?.inventoryQuantity));
@@ -801,6 +845,7 @@ function ProductDetails({
                           resizeMode="cover"
                           repeat={true}
                           maxBitRate={2000000}
+                          paused={!isPlaying}
                           hideShutterView={true}
                           onBuffer={e => {
                             if (e.isBuffering == true) {
@@ -844,6 +889,9 @@ function ProductDetails({
                     </View>
                   );
                 }}
+                onViewableItemsChanged={onViewableItemsChanged}
+                contentContainerStyle={{ paddingBottom: 100 ,}}
+                viewabilityConfig={viewabilityConfig}
               />
             </View>
             {/* <TouchableOpacity style={[styles.button, alignItemsCenter, borderRadius5]} onPress={onPreesViewReviewAll}>
@@ -943,17 +991,22 @@ function ProductDetails({
             </Pressable>
           ) : ( */}
         <Pressable
-          disabled={loading || !variantSelected}
+          // disabled={loading || !variantSelected}
           style={[styles.addToCartButton, borderRadius10, { width: wp(45), marginRight: 20, backgroundColor: "#fff", borderColor: redColor, borderWidth: 1 }]}
-          // onPress={() => variant?.id && onAddToCart(variant.id, quantity)}
-          onPress={() => {
-            const selectedVariantId = getSelectedVariantId();
-            if (selectedVariantId) {
-              onAddToCart(selectedVariantId, quantity);
-            } else {
-              Alert.alert('Please select a variant before adding to cart');
-            }
-          }}
+          onPress={() => onAddToCart(product.variants[0].variantId, quantity)}
+//           onPress={() => {
+// console.log("product.variants[0].variantId",product.variants[0].variantId);
+
+//             const selectedVariantId = getSelectedVariantId();
+//             console.log("selectedVariantIdselectedVariantId",selectedVariantId);
+
+//             if (selectedVariantId) {
+              
+//               onAddToCart(selectedVariantId, quantity);
+//             } else {
+//               Alert.alert('Please select a variant before adding to cart');
+//             }
+//           }}
         >
           {loading ? (
             <View style={[styles.addToCartButtonLoading, textAlign]}>

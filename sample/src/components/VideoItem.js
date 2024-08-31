@@ -55,17 +55,30 @@ import {
 import Video from 'react-native-video';
 import convertToProxyURL from 'react-native-video-cache';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import { useDispatch, useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { ADD_TO_CART, SHARE, VOICE } from '../assests/images';
 import { green, redColor } from '../constants/Color';
+import { addToWishlist, removeFromWishlist } from '../redux/actions/wishListActions';
+import { ADMINAPI_ACCESS_TOKEN, STOREFRONT_DOMAIN } from '../constants/Constants';
+import Toast from 'react-native-simple-toast';
 
-const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
-  // console.log("navigation..", item);ß
+
+const VideoItem = ({ item, index, currentIndex,onAddToCart, navigation, onPress,presentCheckout }) => {
+// console.log("itemitemitem",item);
+  const dispatch = useDispatch();
+  const wishList = useSelector(state => state.wishlist.wishlist);
+  // const isSelected = wishList.some(data => data.productId === item.productId);
   const [loading, setLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
-
+  const [isSelected, setIsSelected] = useState(false);
+  useEffect(() => {
+    // Check if the item is in the wishlist and update local state
+    const isItemInWishlist = wishList.some(data => data.productId === item.productId);
+    setIsSelected(isItemInWishlist);
+  }, [wishList,item,isSelected]);
   const toggleMute = () => {
     setIsMuted(!isMuted);
   };
@@ -81,6 +94,29 @@ const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
   const onBuffer = meta => {
     console.log('Buffering:');
     setLoading(meta.isBuffering);
+  };
+  const handlePress = () => {
+    if (!isSelected) {
+      dispatch(addToWishlist(item));
+    } else {
+      dispatch(removeFromWishlist(item));
+    }
+    setIsSelected(!isSelected); // Toggle the state
+  };
+
+  
+  const extractNumericId = (gid) => {
+    const parts = gid.split('/');
+    return parts[parts.length - 1]; // Get the last part
+  };
+  const variantId = extractNumericId(item.variants[0].variantId);
+ const [cartLoading, setCartLoading] = useState(false)
+  const handleAddToCart = () => {
+    // dispatch(addProductInCart(product));
+    console.log("handleAddToCartvariantId",variantId);
+    onAddToCart(item.variants[0].variantId,1);
+    Toast.show(`1 item added to cart`);
+
   };
   const videoUrl =
     'https://cdn.shopify.com/videos/c/vp/474e4c3b8a9a423ebd3d9ccf3fda0281/474e4c3b8a9a423ebd3d9ccf3fda0281.HD-1080p-4.8Mbps-32573231.mp4';
@@ -169,9 +205,10 @@ const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <View style={styles.iconContainer}>
           <AntDesign
-            name="hearto"
+            onPress={handlePress}
+            name={isSelected ? "heart":"hearto"}
             size={25}
-            color="black"
+            color={isSelected ? redColor :"black"}
             style={styles.icon}
           />
           {/* <Icon name="comment-o" size={25} color="black" style={styles.icon} /> */}
@@ -185,7 +222,7 @@ const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
             }}
           />
         </View>
-        <View style={styles.iconContainer}>
+        <TouchableOpacity style={styles.iconContainer} onPress={handleAddToCart}>
           <Image
             source={ADD_TO_CART}
             style={{
@@ -195,7 +232,7 @@ const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
               objectFit: 'contain',
             }}
           />
-        </View>
+        </TouchableOpacity>
       </View>
       <View style={{ marginHorizontal: 10 }}>
         <Text style={{ color: 'black', width: '40%' }}>
@@ -213,8 +250,8 @@ const VideoItem = ({ item, index, currentIndex, navigation, onPress }) => {
           <Icon name="star" size={16} color="#fff" />
           <Text style={styles.reviewsText}>| 3.7K</Text>
         </View>
-        <TouchableOpacity style={styles.buyButton}>
-          <Text style={{ color: '#fff', alignSelf: 'center' }}>Buy Now</Text>
+        <TouchableOpacity style={styles.buyButton} onPress={handleAddToCart}>
+          <Text style={{ color: '#fff', alignSelf: 'center' }}>{"Buy Now"}</Text>
         </TouchableOpacity>
       </View>
       <View style={{ flexDirection: 'row', marginHorizontal: 10, gap: 10 }}>

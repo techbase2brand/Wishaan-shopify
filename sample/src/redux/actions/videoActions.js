@@ -3,6 +3,7 @@ export const FETCH_VIDEOS_REQUEST = 'FETCH_VIDEOS_REQUEST';
 export const FETCH_VIDEOS_SUCCESS = 'FETCH_VIDEOS_SUCCESS';
 export const SET_CACHED_FILES = 'SET_CACHED_FILES';
 export const FETCH_CACHED_VIDEOS_SUCCESS = 'FETCH_CACHED_VIDEOS_SUCCESS';
+export const UPDATE_PAGINATION = 'UPDATE_PAGINATION';
 export const FETCH_VIDEOS_FAILURE = 'FETCH_VIDEOS_FAILURE';
 
 export const fetchVideosRequest = () => ({
@@ -20,6 +21,10 @@ export const setCachedFiles = (files) => {
     payload: files,
   };
 };
+export const updatePagination = (hasNextPage, endCursor) => ({
+  type: UPDATE_PAGINATION,
+  payload: { hasNextPage, endCursor },
+});
 export const fetchVideosFailure = (error) => ({
   type: FETCH_VIDEOS_FAILURE,
   payload: error,

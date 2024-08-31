@@ -6,6 +6,7 @@ import convertToProxyURL from 'react-native-video-cache';
 import { REEL_PLAY_BLACK, REEL_PLAY_WHITE } from '../assests/images';
 
 export default function RecommendedVideo({ item, onPress, isPlaying }) {
+
   const [loading, setLoading] = useState(true);
 
   const handleLoad = () => {
@@ -19,7 +20,7 @@ export default function RecommendedVideo({ item, onPress, isPlaying }) {
   const onBuffer = meta => {
     setLoading(meta.isBuffering);
   };
-  
+
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(item)} activeOpacity={0.9}>
       <Video
@@ -29,7 +30,7 @@ export default function RecommendedVideo({ item, onPress, isPlaying }) {
           bufferForPlaybackMs: 1000,
           bufferForPlaybackAfterRebufferMs: 1500,
         }}
-        source={{ uri: convertToProxyURL(item?.video_url) }}
+        source={{ uri: convertToProxyURL(item?.video_url ? item?.video_url : item) }}
         style={styles.thumbnail}
         resizeMode="cover"
         repeat={true}
@@ -75,6 +76,6 @@ const styles = StyleSheet.create({
     height: 30,
   },
   playButtonContainer: {
-  
+
   },
 });
