@@ -318,7 +318,6 @@ const { height } = Dimensions.get('window');
 
 const VideoList = ({ cachedFiles, currentIndex, onViewableItemsChanged, viewabilityConfig, navigation,selectedFilter }) => {
   const ShopifyCheckout = useShopifyCheckoutSheet();
-
   const cacheFiles = useSelector(state => state.cachedFiles?.cachedFiles);
   const userLoggedIn = useSelector(state => state.auth.isAuthenticated);
   const { addToCart, addingToCart, clearCart,checkoutURL } = useCart();
@@ -332,8 +331,6 @@ const VideoList = ({ cachedFiles, currentIndex, onViewableItemsChanged, viewabil
   const [entriesData, setEntriesData] = useState([]);
   const [filteredVideos, setFilteredVideos] = useState([]);
 
-
-  console.log("selectedFilter",selectedFilter);
   const videosPerPage = 3;
   const productMedia = cachedFiles?.map(productEdge => {
     const productId = productEdge?.node?.id;
@@ -373,7 +370,6 @@ const VideoList = ({ cachedFiles, currentIndex, onViewableItemsChanged, viewabil
     }
    
   }, [selectedFilter,cachedFiles,videosPerPage, page]);
-  console.log("filteredVideosfilteredVideos",filteredVideos);
   // useEffect(() => {
   //   extractInventoryQuantities();
   // }, [cachedFiles]);
@@ -695,7 +691,6 @@ const VideoList = ({ cachedFiles, currentIndex, onViewableItemsChanged, viewabil
     }
   }).current;
 
-
   const addToCartProduct = async (variantId, quantity) => {
     await addToCart(variantId, quantity);
     // navigation.navigate('CartModal')
@@ -844,13 +839,16 @@ const VideoList = ({ cachedFiles, currentIndex, onViewableItemsChanged, viewabil
         navigation={navigation}
         presentCheckout={presentCheckout}
         onAddToCart={addToCartProduct}
+        // onPress={() => {
+        //   navigation.navigate('ProductDetails', {
+        //     product: item,
+        //     variant: getVariant(item),
+        //     inventoryQuantity: bestDealInventoryQuantities[index],
+        //     option: bestDealoptions[index],
+        //   });
+        // }}
         onPress={() => {
-          navigation.navigate('ProductDetails', {
-            product: item,
-            variant: getVariant(item),
-            inventoryQuantity: bestDealInventoryQuantities[index],
-            option: bestDealoptions[index],
-          });
+          navigation.navigate('ReelsScreen')
         }}
       />
     );

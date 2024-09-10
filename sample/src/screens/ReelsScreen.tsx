@@ -24,12 +24,32 @@ const ReelsScreen = ({route, navigation}) => {
   const [loading, setLoading] = useState(false);
   const [allLoaded, setAllLoaded] = useState(false);
 
+  const productMedia = videos?.map(productEdge => {
+    const productId = productEdge?.node?.id;
+    const title = productEdge?.node?.title;
+    const description = productEdge?.node?.descriptionHtml;
+    const tags = productEdge?.node?.tags;
+    const variants = productEdge?.node?.variants?.edges?.map(variantEdge => ({
+      variantId: variantEdge?.node?.id,
+      // variantTitle: variantEdge?.node?.title,
+    }));
+    const media = productEdge?.node?.media?.edges?.map(mediaEdge => ({
+      ...mediaEdge?.node?.sources[0],
+      productId,
+      title,
+      description,
+      variants,
+      tags
+    }));
+    return media;
+  });
+  const productVideosUrl = productMedia?.reduce((acc, val) => acc.concat(val), []).filter(Boolean);
+
   const videosPerPage = 10;
 
   useEffect(() => {
     loadMoreVideos();
   }, []);
-  console.log("videosvideos..", videos?.length);
   
 
   const insertAds = (videoArray) => {
@@ -52,7 +72,7 @@ const ReelsScreen = ({route, navigation}) => {
     setTimeout(() => {
       const start = (page - 1) * videosPerPage;
       const end = start + videosPerPage;
-      const newVideos = videos.slice(start, end);
+      const newVideos = productVideosUrl.slice(start, end);
 
       if (newVideos.length === 0) {
         setAllLoaded(true); // Set flag if no more videos to load
@@ -69,7 +89,6 @@ const ReelsScreen = ({route, navigation}) => {
       loadMoreVideos();
     }
   };
-  console.log('reelspage', videos.length);
   const viewabilityConfig = {
     itemVisiblePercentThreshold: 50,
   };
@@ -78,7 +97,6 @@ const ReelsScreen = ({route, navigation}) => {
     if (viewableItems.length > 0) {
       const visibleItem = viewableItems[0];
       setCurrentIndex(visibleItem.index);
-      console.log('Current Index:', visibleItem.index);
     }
   }, []);
   const onPageSelected = useCallback((event) => {

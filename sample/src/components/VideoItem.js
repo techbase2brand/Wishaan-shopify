@@ -67,7 +67,6 @@ import Toast from 'react-native-simple-toast';
 
 
 const VideoItem = ({ item, index, currentIndex,onAddToCart, navigation, onPress,presentCheckout }) => {
-console.log("VideoItemVideoItem",item);
   const dispatch = useDispatch();
   const wishList = useSelector(state => state.wishlist.wishlist);
   // const isSelected = wishList.some(data => data.productId === item.productId);
