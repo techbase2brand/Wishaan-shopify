@@ -236,6 +236,8 @@ console.log("productImagesAndTitles..",productImagesAndTitles);
                 images: product.node.images.edges[0]?.node // Get the first image URL directly
               };
             });
+            console.log("extractedDataextractedData",extractedData);
+            
             setProductImagesAndTitles(extractedData);
           }
         })

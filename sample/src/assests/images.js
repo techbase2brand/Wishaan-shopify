@@ -79,3 +79,5 @@ export const REEL_PLAY_WHITE = require('./VideoSection/reelPlayWhite.png')
 export const VIP_LOGO = require('./vipLogo.png')
 export const VIP_POSTER = require('./vipPoster.png')
 
+export const BEST_SELLER= require('./TagsImg/best_seller.png')
+export const WISHAAN_CHOICE= require('./TagsImg/wishaanchoice.png')
